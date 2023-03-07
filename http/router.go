@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/breez/notify/config"
 	"github.com/breez/notify/notify"
 	"github.com/gin-gonic/gin"
 )
@@ -14,12 +15,11 @@ type WebHookQuery struct {
 	Token    string
 }
 
-func Run(notifier *notify.Notifier) error {
+func Run(notifier *notify.Notifier, config *config.HTTPConfig) error {
 	r := gin.Default()
 	router := r.Group("api/v1")
-
 	addWebHookRouter(router, notifier)
-	return r.Run()
+	return r.Run(config.Address)
 }
 
 func addWebHookRouter(r *gin.RouterGroup, notifier *notify.Notifier) {
