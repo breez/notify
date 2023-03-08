@@ -27,9 +27,9 @@ func TestNotify(t *testing.T) {
 	config := &config.Config{WorkersNum: 2}
 	notifier := NewNotifier(config, map[string]Service{"test": service})
 	notification := Notification{
-		Template: "t1",
-		Type:     "test",
-		Token:    "token1",
+		Template:         "t1",
+		Type:             "test",
+		TargetIdentifier: "token1",
 	}
 	notifier.Notify(context.Background(), &notification)
 

@@ -7,6 +7,8 @@ require (
 	github.com/Netflix/go-env v0.0.0-20220526054621-78278af1949d
 	github.com/gin-gonic/gin v1.9.0
 	github.com/golang-queue/queue v0.1.3
+	github.com/google/martian/v3 v3.2.1
+	gotest.tools v2.2.0+incompatible
 	gotest.tools/v3 v3.4.0
 )
 
@@ -38,6 +40,7 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.7 // indirect
+	github.com/pkg/errors v0.9.1 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.10 // indirect
 	go.opencensus.io v0.24.0 // indirect
