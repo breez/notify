@@ -1,6 +1,8 @@
 package breezsdk
 
 import (
+	"encoding/json"
+
 	"firebase.google.com/go/messaging"
 	"github.com/breez/notify/config"
 	"github.com/breez/notify/notify"
@@ -10,27 +12,37 @@ import (
 func NewNotifier(c *config.Config, fcmClient *messaging.Client) (*notify.Notifier, error) {
 	fcm := services.NewFCM(createMessageFactory(), fcmClient)
 	return notify.NewNotifier(c, map[string]notify.Service{
-		"fcm": fcm,
+		"ios":     fcm,
+		"android": fcm,
 	}), nil
 }
 
-func createMessageFactory() services.FCMMessageFactory {
-	return func(notification *notify.Notification) *messaging.Message {
+func createMessageFactory() services.FCMMessageBuilder {
+	return func(notification *notify.Notification) (*messaging.Message, error) {
+
 		switch notification.Template {
-		case notify.NOTIFICATION_PAYMENT_RECEIVED:
-		case notify.NOTIFICATION_LSP_CLOSES_CHANNEL:
+		case notify.NOTIFICATION_PAYMENT_RECEIVED,
+			notify.NOTIFICATION_TX_CONFIRMED,
+			notify.NOTIFICATION_ADDRESS_TXS_CHANGED:
+
 			return createSilentPush(notification)
 		}
 
-		return nil
+		return nil, nil
 	}
 }
 
-func createSilentPush(notification *notify.Notification) *messaging.Message {
+func createSilentPush(notification *notify.Notification) (*messaging.Message, error) {
+	data, err := json.Marshal(notification.Data)
+	if err != nil {
+		return nil, err
+	}
+
 	return &messaging.Message{
-		Token: notification.Token,
+		Token: notification.TargetIdentifier,
 		Data: map[string]string{
 			"notification_type": notification.Template,
+			"data":              string(data),
 		},
 		Android: &messaging.AndroidConfig{
 			Priority: "high",
@@ -46,5 +58,5 @@ func createSilentPush(notification *notify.Notification) *messaging.Message {
 				},
 			},
 		},
-	}
+	}, nil
 }

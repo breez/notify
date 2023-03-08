@@ -6,11 +6,13 @@ import (
 
 	"github.com/breez/notify/config"
 	"github.com/golang-queue/queue"
+	"github.com/google/martian/v3/log"
 )
 
 const (
-	NOTIFICATION_PAYMENT_RECEIVED   = "payment_received"
-	NOTIFICATION_LSP_CLOSES_CHANNEL = "lsp_closes_channel"
+	NOTIFICATION_PAYMENT_RECEIVED    = "payment_received"
+	NOTIFICATION_TX_CONFIRMED        = "tx_confirmed"
+	NOTIFICATION_ADDRESS_TXS_CHANGED = "address_txs_changed"
 )
 
 var (
@@ -18,9 +20,10 @@ var (
 )
 
 type Notification struct {
-	Template string
-	Type     string
-	Token    string
+	Template         string
+	Type             string
+	TargetIdentifier string
+	Data             map[string]interface{}
 }
 
 type Service interface {
@@ -46,8 +49,14 @@ func (n *Notifier) Notify(c context.Context, request *Notification) error {
 	return n.queue.QueueTask(func(ctx context.Context) error {
 		service, ok := n.serviceByType[request.Type]
 		if !ok {
+			log.Errorf("could not find service %+v %v", request.Type)
 			return ErrServiceNotFound
 		}
-		return service.Send(c, request)
+		if err := service.Send(c, request); err != nil {
+			log.Errorf("failed to send notification %+v %v", request, err)
+			return err
+		}
+		log.Infof("succeed to send notification %+v", request)
+		return nil
 	})
 }

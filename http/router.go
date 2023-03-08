@@ -1,40 +1,111 @@
 package http
 
 import (
+	"errors"
 	"log"
 	"net/http"
 
 	"github.com/breez/notify/config"
 	"github.com/breez/notify/notify"
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 )
 
-type WebHookQuery struct {
-	Template string
-	Type     string
-	Token    string
+type MobilePushWebHookQuery struct {
+	Platform string `form:"platform" binding:"required,oneof=ios android"`
+	Token    string `form:"token" binding:"required"`
+}
+
+type NotificationConvertible interface {
+	ToNotification(query *MobilePushWebHookQuery) *notify.Notification
+}
+
+type PaymentReceivedPayload struct {
+	Template string `json:"template" binding:"required,eq=payment_received"`
+	Data     struct {
+		PaymentHash string `json:"payment_hash" binding:"required"`
+	} `json:"data"`
+}
+
+func (p *PaymentReceivedPayload) ToNotification(query *MobilePushWebHookQuery) *notify.Notification {
+	return &notify.Notification{
+		Template:         p.Template,
+		Type:             query.Platform,
+		TargetIdentifier: query.Token,
+		Data:             map[string]interface{}{"payment_hash": p.Data.PaymentHash},
+	}
+}
+
+type TxConfirmedPayload struct {
+	Template string `json:"template" binding:"required,eq=tx_confirmed"`
+	Data     struct {
+		TxID string `json:"tx_id" binding:"required"`
+	} `json:"data"`
+}
+
+func (p *TxConfirmedPayload) ToNotification(query *MobilePushWebHookQuery) *notify.Notification {
+	return &notify.Notification{
+		Template:         p.Template,
+		Type:             query.Platform,
+		TargetIdentifier: query.Token,
+		Data:             map[string]interface{}{"tx_id": p.Data.TxID},
+	}
+}
+
+type AddressTxsChangedPayload struct {
+	Template string `json:"template" binding:"required,eq=address_txs_changed"`
+	Data     struct {
+		Address string `json:"address" binding:"required"`
+	} `json:"data"`
+}
+
+func (p *AddressTxsChangedPayload) ToNotification(query *MobilePushWebHookQuery) *notify.Notification {
+	return &notify.Notification{
+		Template:         p.Template,
+		Type:             query.Platform,
+		TargetIdentifier: query.Token,
+		Data:             map[string]interface{}{"address": p.Data.Address},
+	}
 }
 
 func Run(notifier *notify.Notifier, config *config.HTTPConfig) error {
+	r := setupRouter(notifier)
+	return r.Run(config.Address)
+}
+
+func setupRouter(notifier *notify.Notifier) *gin.Engine {
 	r := gin.Default()
 	router := r.Group("api/v1")
 	addWebHookRouter(router, notifier)
-	return r.Run(config.Address)
+	return r
 }
 
 func addWebHookRouter(r *gin.RouterGroup, notifier *notify.Notifier) {
 	r.POST("/notify", func(c *gin.Context) {
-		var query WebHookQuery
+
+		// Make sure the query string fits the mobile push structure
+		var query MobilePushWebHookQuery
 		if err := c.ShouldBindQuery(&query); err != nil {
 			c.AbortWithError(http.StatusBadRequest, err)
 			return
 		}
 
-		if err := notifier.Notify(c, &notify.Notification{
-			Template: query.Template,
-			Type:     query.Type,
-			Token:    query.Token,
-		}); err != nil {
+		// Find a matching notification payload
+		payloads := []NotificationConvertible{&PaymentReceivedPayload{}, &TxConfirmedPayload{}, &AddressTxsChangedPayload{}}
+		var validPayload NotificationConvertible
+		for _, p := range payloads {
+			if err := c.ShouldBindBodyWith(p, binding.JSON); err != nil {
+				continue
+			}
+			validPayload = p
+			break
+		}
+
+		if validPayload == nil {
+			c.AbortWithError(http.StatusBadRequest, errors.New("unsupported payload"))
+		}
+
+		if err := notifier.Notify(c, validPayload.ToNotification(&query)); err != nil {
 			log.Printf("failed to notify, query: %v, error: %v", query, err)
 			c.AbortWithStatus(http.StatusInternalServerError)
 			return

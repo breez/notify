@@ -34,5 +34,7 @@ You can also run it as an http service to allow for example webhooks as triggers
 http.Run(notifier, httpConfig)
 ```
 
-  
+# Breez SDK
+The code in the breezsdk package enables you to run the service exactly as we run for our apps that uses the sdk it.
+In case you want to use it as is you will need to ensure that you follow the exact URL structure as we do.
 
