@@ -3,9 +3,12 @@ package main
 import (
 	"context"
 	"log"
+	"os"
 
 	firebase "firebase.google.com/go"
 	"github.com/Netflix/go-env"
+	"golang.org/x/oauth2/google"
+	"google.golang.org/api/option"
 
 	//"github.com/breez/notify/breezsdk"
 	"github.com/breez/notify/breezsdk"
@@ -22,7 +25,12 @@ func main() {
 	if err := config.Validate(); err != nil {
 		log.Fatalf("failed to validate config %v", err)
 	}
-	firebaseApp, err := firebase.NewApp(context.Background(), nil)
+
+	creds, err := google.CredentialsFromJSON(context.Background(), []byte(os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")), "https://www.googleapis.com/auth/firebase.messaging")
+	if err != nil {
+		log.Fatalf("failed to get google credentials %v", err)
+	}
+	firebaseApp, err := firebase.NewApp(context.Background(), nil, option.WithCredentials(creds))
 	if err != nil {
 		log.Fatalf("failed to create firebase application %v", err)
 	}
