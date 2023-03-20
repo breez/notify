@@ -70,6 +70,7 @@ func (p *AddressTxsChangedPayload) ToNotification(query *MobilePushWebHookQuery)
 
 func Run(notifier *notify.Notifier, config *config.HTTPConfig) error {
 	r := setupRouter(notifier)
+	r.SetTrustedProxies(nil)
 	return r.Run(config.Address)
 }
 
