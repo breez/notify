@@ -23,7 +23,7 @@ type Notification struct {
 	Template         string
 	Type             string
 	TargetIdentifier string
-	Data             map[string]interface{}
+	Data             map[string]string
 }
 
 type Service interface {

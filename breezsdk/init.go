@@ -1,8 +1,6 @@
 package breezsdk
 
 import (
-	"encoding/json"
-
 	"firebase.google.com/go/messaging"
 	"github.com/breez/notify/config"
 	"github.com/breez/notify/notify"
@@ -33,17 +31,12 @@ func createMessageFactory() services.FCMMessageBuilder {
 }
 
 func createSilentPush(notification *notify.Notification) (*messaging.Message, error) {
-	data, err := json.Marshal(notification.Data)
-	if err != nil {
-		return nil, err
-	}
+	data := notification.Data
+	data["notification_type"] = notification.Template
 
 	return &messaging.Message{
 		Token: notification.TargetIdentifier,
-		Data: map[string]string{
-			"notification_type": notification.Template,
-			"data":              string(data),
-		},
+		Data:  data,
 		Android: &messaging.AndroidConfig{
 			Priority: "high",
 		},

@@ -32,7 +32,7 @@ func (p *PaymentReceivedPayload) ToNotification(query *MobilePushWebHookQuery) *
 		Template:         p.Template,
 		Type:             query.Platform,
 		TargetIdentifier: query.Token,
-		Data:             map[string]interface{}{"payment_hash": p.Data.PaymentHash},
+		Data:             map[string]string{"payment_hash": p.Data.PaymentHash},
 	}
 }
 
@@ -48,7 +48,7 @@ func (p *TxConfirmedPayload) ToNotification(query *MobilePushWebHookQuery) *noti
 		Template:         p.Template,
 		Type:             query.Platform,
 		TargetIdentifier: query.Token,
-		Data:             map[string]interface{}{"tx_id": p.Data.TxID},
+		Data:             map[string]string{"tx_id": p.Data.TxID},
 	}
 }
 
@@ -64,7 +64,7 @@ func (p *AddressTxsChangedPayload) ToNotification(query *MobilePushWebHookQuery)
 		Template:         p.Template,
 		Type:             query.Platform,
 		TargetIdentifier: query.Token,
-		Data:             map[string]interface{}{"address": p.Data.Address},
+		Data:             map[string]string{"address": p.Data.Address},
 	}
 }
 
