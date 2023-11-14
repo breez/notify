@@ -104,7 +104,6 @@ func addWebHookRouter(r *gin.RouterGroup, notifier *notify.Notifier) {
 		}
 
 		if validPayload == nil {
-			log.Printf("no valid payload found, query: %v", query)
 			c.AbortWithError(http.StatusBadRequest, errors.New("unsupported payload"))
 		}
 
