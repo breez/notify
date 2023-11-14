@@ -96,6 +96,7 @@ func addWebHookRouter(r *gin.RouterGroup, notifier *notify.Notifier) {
 		var validPayload NotificationConvertible
 		for _, p := range payloads {
 			if err := c.ShouldBindBodyWith(p, binding.JSON); err != nil {
+				log.Printf("request body is invalid json, error: %v", err)
 				continue
 			}
 			validPayload = p
