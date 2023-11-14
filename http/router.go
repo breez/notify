@@ -1,6 +1,7 @@
 package http
 
 import (
+	"bytes"
 	"errors"
 	"io"
 	"log"
@@ -85,6 +86,9 @@ func setupRouter(notifier *notify.Notifier) *gin.Engine {
 func addWebHookRouter(r *gin.RouterGroup, notifier *notify.Notifier) {
 	r.POST("/notify", func(c *gin.Context) {
 
+		body, _ := io.ReadAll(c.Request.Body)
+		c.Request.Body = io.NopCloser(bytes.NewBuffer(body))
+
 		// Make sure the query string fits the mobile push structure
 		var query MobilePushWebHookQuery
 		if err := c.ShouldBindQuery(&query); err != nil {
@@ -104,8 +108,7 @@ func addWebHookRouter(r *gin.RouterGroup, notifier *notify.Notifier) {
 		}
 
 		if validPayload == nil {
-			body, _ := io.ReadAll(c.Request.Body)
-			log.Printf("invalid payload, body: %v", string(body))
+			log.Printf("invalid payload, body: %s", body)
 			c.AbortWithError(http.StatusBadRequest, errors.New("unsupported payload"))
 		}
 
