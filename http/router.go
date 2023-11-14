@@ -2,6 +2,7 @@ package http
 
 import (
 	"errors"
+	"io"
 	"log"
 	"net/http"
 
@@ -103,6 +104,8 @@ func addWebHookRouter(r *gin.RouterGroup, notifier *notify.Notifier) {
 		}
 
 		if validPayload == nil {
+			body, _ := io.ReadAll(c.Request.Body)
+			log.Printf("invalid payload, body: %v", string(body))
 			c.AbortWithError(http.StatusBadRequest, errors.New("unsupported payload"))
 		}
 
