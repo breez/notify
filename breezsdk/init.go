@@ -46,9 +46,6 @@ func createSilentPush(notification *notify.Notification) (*messaging.Message, er
 			},
 			Payload: &messaging.APNSPayload{
 				Aps: &messaging.Aps{
-					Alert: &messaging.ApsAlert{
-						Title: "Incoming payment",
-					},
 					ContentAvailable: false,
 					MutableContent:   true,
 				},
