@@ -15,3 +15,9 @@
 # vendor/
 firebase_creds.json
 .vscode/launch.json
+
+# Environment variables
+*.env
+
+# Binary Files
+*.DS_STORE

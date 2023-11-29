@@ -7,6 +7,7 @@ import (
 
 	firebase "firebase.google.com/go"
 	"github.com/Netflix/go-env"
+	"github.com/joho/godotenv"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/option"
 
@@ -17,6 +18,11 @@ import (
 )
 
 func main() {
+	// Read environment variables from breezsdk/cmd/config.env if the file is available
+	if err := godotenv.Load("config.env"); err != nil && !os.IsNotExist(err) {
+		log.Fatalln("Error loading .env file")
+	}
+
 	var config config.Config
 	if _, err := env.UnmarshalFromEnviron(&config); err != nil {
 		log.Fatalf("failed to load config %v", err)
