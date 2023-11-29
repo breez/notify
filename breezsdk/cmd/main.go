@@ -18,9 +18,12 @@ import (
 )
 
 func main() {
-	// Read environment variables from breezsdk/cmd/config.env if the file is available
-	if err := godotenv.Load("config.env"); err != nil && !os.IsNotExist(err) {
-		log.Fatalln("Error loading .env file")
+	environment := os.Getenv("NOTIFIER_ENV")
+	// Read environment variables from breezsdk/cmd/config.env (if the file is available) on Dev environment
+	if environment == "development" {
+		if err := godotenv.Load("config.env"); err != nil && !os.IsNotExist(err) {
+			log.Fatalln("Error loading .env file")
+		}
 	}
 
 	var config config.Config
