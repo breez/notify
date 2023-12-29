@@ -33,6 +33,7 @@ func createMessageFactory() services.FCMMessageBuilder {
 func createSilentPush(notification *notify.Notification) (*messaging.Message, error) {
 	data := notification.Data
 	data["notification_type"] = notification.Template
+	data["click_action"] = "FLUTTER_NOTIFICATION_CLICK"
 
 	return &messaging.Message{
 		Token: notification.TargetIdentifier,
@@ -47,7 +48,7 @@ func createSilentPush(notification *notify.Notification) (*messaging.Message, er
 			Payload: &messaging.APNSPayload{
 				Aps: &messaging.Aps{
 					Alert: &messaging.ApsAlert{
-						Title: "Incoming payment",
+						Title: "Receiving payment...",
 					},
 					ContentAvailable: false,
 					MutableContent:   true,
