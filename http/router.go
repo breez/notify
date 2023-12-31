@@ -22,6 +22,23 @@ type NotificationConvertible interface {
 	ToNotification(query *MobilePushWebHookQuery) *notify.Notification
 }
 
+type WebhookCallbackMessagePayload struct {
+	Template string `json:"template" binding:"required,eq=webhook_callback_message"`
+	Data     struct {
+		CallbackURL    string `json:"callback_url" binding:"required"`
+		MessagePayload string `json:"message_payload"`
+	} `json:"data"`
+}
+
+func (p *WebhookCallbackMessagePayload) ToNotification(query *MobilePushWebHookQuery) *notify.Notification {
+	return &notify.Notification{
+		Template:         p.Template,
+		Type:             query.Platform,
+		TargetIdentifier: query.Token,
+		Data:             map[string]string{"callback_url": p.Data.CallbackURL, "message_payload": p.Data.MessagePayload},
+	}
+}
+
 type PaymentReceivedPayload struct {
 	Template string `json:"template" binding:"required,eq=payment_received"`
 	Data     struct {
@@ -97,7 +114,7 @@ func addWebHookRouter(r *gin.RouterGroup, notifier *notify.Notifier) {
 		}
 
 		// Find a matching notification payload
-		payloads := []NotificationConvertible{&PaymentReceivedPayload{}, &TxConfirmedPayload{}, &AddressTxsChangedPayload{}}
+		payloads := []NotificationConvertible{&PaymentReceivedPayload{}, &TxConfirmedPayload{}, &AddressTxsChangedPayload{}, &WebhookCallbackMessagePayload{}}
 		var validPayload NotificationConvertible
 		for _, p := range payloads {
 			if err := c.ShouldBindBodyWith(p, binding.JSON); err != nil {

@@ -21,7 +21,8 @@ func createMessageFactory() services.FCMMessageBuilder {
 		switch notification.Template {
 		case notify.NOTIFICATION_PAYMENT_RECEIVED,
 			notify.NOTIFICATION_TX_CONFIRMED,
-			notify.NOTIFICATION_ADDRESS_TXS_CHANGED:
+			notify.NOTIFICATION_ADDRESS_TXS_CHANGED,
+			notify.NOTIFICATION_WEBHOOK_CALLBACK:
 
 			return createSilentPush(notification)
 		}
