@@ -21,19 +21,19 @@ func createMessageFactory() services.FCMMessageBuilder {
 		switch notification.Template {
 		case notify.NOTIFICATION_PAYMENT_RECEIVED,
 			notify.NOTIFICATION_TX_CONFIRMED,
-			notify.NOTIFICATION_ADDRESS_TXS_CHANGED:
+			notify.NOTIFICATION_ADDRESS_TXS_CHANGED,
+			notify.NOTIFICATION_WEBHOOK_CALLBACK:
 
-			return createSilentPush(notification)
+			return createPush(notification)
 		}
 
 		return nil, nil
 	}
 }
 
-func createSilentPush(notification *notify.Notification) (*messaging.Message, error) {
+func createPush(notification *notify.Notification) (*messaging.Message, error) {
 	data := notification.Data
 	data["notification_type"] = notification.Template
-
 	return &messaging.Message{
 		Token: notification.TargetIdentifier,
 		Data:  data,
@@ -47,7 +47,7 @@ func createSilentPush(notification *notify.Notification) (*messaging.Message, er
 			Payload: &messaging.APNSPayload{
 				Aps: &messaging.Aps{
 					Alert: &messaging.ApsAlert{
-						Title: "Incoming payment",
+						Title: notification.DisplayMessage,
 					},
 					ContentAvailable: false,
 					MutableContent:   true,
