@@ -22,6 +22,7 @@ var (
 
 type Notification struct {
 	Template         string
+	DisplayMessage   string
 	Type             string
 	TargetIdentifier string
 	Data             map[string]string

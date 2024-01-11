@@ -23,8 +23,9 @@ type NotificationConvertible interface {
 }
 
 type WebhookCallbackMessagePayload struct {
-	Template string `json:"template" binding:"required,eq=webhook_callback_message"`
-	Data     struct {
+	Template    string `json:"template" binding:"required,eq=webhook_callback_message"`
+	MessageType string `json:"message_type" binding:"required"`
+	Data        struct {
 		CallbackURL    string `json:"callback_url" binding:"required"`
 		MessagePayload string `json:"message_payload"`
 	} `json:"data"`
@@ -33,10 +34,24 @@ type WebhookCallbackMessagePayload struct {
 func (p *WebhookCallbackMessagePayload) ToNotification(query *MobilePushWebHookQuery) *notify.Notification {
 	return &notify.Notification{
 		Template:         p.Template,
+		DisplayMessage:   p.GenerateDisplayMessage(),
 		Type:             query.Platform,
 		TargetIdentifier: query.Token,
-		Data:             map[string]string{"callback_url": p.Data.CallbackURL, "message_payload": p.Data.MessagePayload},
+		Data: map[string]string{
+			"callback_url":    p.Data.CallbackURL,
+			"message_payload": p.Data.MessagePayload,
+		},
 	}
+}
+
+func (p *WebhookCallbackMessagePayload) GenerateDisplayMessage() string {
+	switch p.MessageType {
+	case "lnulrpay_info":
+		return "Receiving payment"
+	case "lnurlpay_invoice":
+		return "Invoice requested"
+	}
+	return ""
 }
 
 type PaymentReceivedPayload struct {
@@ -49,6 +64,7 @@ type PaymentReceivedPayload struct {
 func (p *PaymentReceivedPayload) ToNotification(query *MobilePushWebHookQuery) *notify.Notification {
 	return &notify.Notification{
 		Template:         p.Template,
+		DisplayMessage:   "Incoming payment",
 		Type:             query.Platform,
 		TargetIdentifier: query.Token,
 		Data:             map[string]string{"payment_hash": p.Data.PaymentHash},
@@ -65,6 +81,7 @@ type TxConfirmedPayload struct {
 func (p *TxConfirmedPayload) ToNotification(query *MobilePushWebHookQuery) *notify.Notification {
 	return &notify.Notification{
 		Template:         p.Template,
+		DisplayMessage:   "Transaction confirmed",
 		Type:             query.Platform,
 		TargetIdentifier: query.Token,
 		Data:             map[string]string{"tx_id": p.Data.TxID},
@@ -81,6 +98,7 @@ type AddressTxsChangedPayload struct {
 func (p *AddressTxsChangedPayload) ToNotification(query *MobilePushWebHookQuery) *notify.Notification {
 	return &notify.Notification{
 		Template:         p.Template,
+		DisplayMessage:   "Address transactions changed",
 		Type:             query.Platform,
 		TargetIdentifier: query.Token,
 		Data:             map[string]string{"address": p.Data.Address},
