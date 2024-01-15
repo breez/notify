@@ -14,8 +14,9 @@ import (
 )
 
 type MobilePushWebHookQuery struct {
-	Platform string `form:"platform" binding:"required,oneof=ios android"`
-	Token    string `form:"token" binding:"required"`
+	Platform string  `form:"platform" binding:"required,oneof=ios android"`
+	Token    string  `form:"token" binding:"required"`
+	AppData  *string `form:"app_data"`
 }
 
 type NotificationConvertible interface {
@@ -37,6 +38,7 @@ func (p *WebhookCallbackMessagePayload) ToNotification(query *MobilePushWebHookQ
 		DisplayMessage:   p.GenerateDisplayMessage(),
 		Type:             query.Platform,
 		TargetIdentifier: query.Token,
+		AppData:          query.AppData,
 		Data: map[string]string{
 			"callback_url":    p.Data.CallbackURL,
 			"message_payload": p.Data.MessagePayload,
@@ -46,7 +48,7 @@ func (p *WebhookCallbackMessagePayload) ToNotification(query *MobilePushWebHookQ
 
 func (p *WebhookCallbackMessagePayload) GenerateDisplayMessage() string {
 	switch p.MessageType {
-	case "lnulrpay_info":
+	case "lnurlpay_info":
 		return "Receiving payment"
 	case "lnurlpay_invoice":
 		return "Invoice requested"
@@ -67,6 +69,7 @@ func (p *PaymentReceivedPayload) ToNotification(query *MobilePushWebHookQuery) *
 		DisplayMessage:   "Incoming payment",
 		Type:             query.Platform,
 		TargetIdentifier: query.Token,
+		AppData:          query.AppData,
 		Data:             map[string]string{"payment_hash": p.Data.PaymentHash},
 	}
 }
@@ -84,6 +87,7 @@ func (p *TxConfirmedPayload) ToNotification(query *MobilePushWebHookQuery) *noti
 		DisplayMessage:   "Transaction confirmed",
 		Type:             query.Platform,
 		TargetIdentifier: query.Token,
+		AppData:          query.AppData,
 		Data:             map[string]string{"tx_id": p.Data.TxID},
 	}
 }
@@ -101,6 +105,7 @@ func (p *AddressTxsChangedPayload) ToNotification(query *MobilePushWebHookQuery)
 		DisplayMessage:   "Address transactions changed",
 		Type:             query.Platform,
 		TargetIdentifier: query.Token,
+		AppData:          query.AppData,
 		Data:             map[string]string{"address": p.Data.Address},
 	}
 }

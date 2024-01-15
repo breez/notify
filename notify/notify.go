@@ -25,6 +25,7 @@ type Notification struct {
 	DisplayMessage   string
 	Type             string
 	TargetIdentifier string
+	AppData          *string
 	Data             map[string]string
 }
 

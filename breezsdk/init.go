@@ -34,6 +34,9 @@ func createMessageFactory() services.FCMMessageBuilder {
 func createPush(notification *notify.Notification) (*messaging.Message, error) {
 	data := notification.Data
 	data["notification_type"] = notification.Template
+	if notification.AppData != nil {
+		data["app_data"] = *notification.AppData
+	}
 	return &messaging.Message{
 		Token: notification.TargetIdentifier,
 		Data:  data,
