@@ -46,10 +46,10 @@ func (p *LnurlPayInfoPayload) ToNotification(query *MobilePushWebHookQuery) *not
 }
 
 type LnurlPayInvoicePayload struct {
-	Template string `json:"template" binding:"required,eq=lnurlpay_info"`
+	Template string `json:"template" binding:"required,eq=lnurlpay_invoice"`
 	Data     struct {
-		Amount         string `json:"amount" binding:"required"`
-		ServerReplyURL string `json:"reply_url" binding:"required"`
+		Amount   string `json:"amount" binding:"required"`
+		ReplyURL string `json:"reply_url" binding:"required"`
 	} `json:"data"`
 }
 
@@ -62,7 +62,7 @@ func (p *LnurlPayInvoicePayload) ToNotification(query *MobilePushWebHookQuery) *
 		AppData:          query.AppData,
 		Data: map[string]string{
 			"amount":    p.Data.Amount,
-			"reply_url": p.Data.ServerReplyURL,
+			"reply_url": p.Data.ReplyURL,
 		},
 	}
 }
