@@ -1,6 +1,9 @@
 package breezsdk
 
 import (
+	"encoding/json"
+	"fmt"
+
 	"firebase.google.com/go/messaging"
 	"github.com/breez/notify/config"
 	"github.com/breez/notify/notify"
@@ -22,7 +25,8 @@ func createMessageFactory() services.FCMMessageBuilder {
 		case notify.NOTIFICATION_PAYMENT_RECEIVED,
 			notify.NOTIFICATION_TX_CONFIRMED,
 			notify.NOTIFICATION_ADDRESS_TXS_CHANGED,
-			notify.NOTIFICATION_WEBHOOK_CALLBACK:
+			notify.NOTIFICATION_LNURLPAY_INFO,
+			notify.NOTIFICATION_LNURLPAY_INVOICE:
 
 			return createPush(notification)
 		}
@@ -32,8 +36,18 @@ func createMessageFactory() services.FCMMessageBuilder {
 }
 
 func createPush(notification *notify.Notification) (*messaging.Message, error) {
-	data := notification.Data
+	data := make(map[string]string)
+
 	data["notification_type"] = notification.Template
+	if notification.AppData != nil {
+		data["app_data"] = *notification.AppData
+	}
+	payload, err := json.Marshal(notification.Data)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal notification data %v", err)
+	}
+	data["notification_payload"] = string(payload)
+
 	return &messaging.Message{
 		Token: notification.TargetIdentifier,
 		Data:  data,

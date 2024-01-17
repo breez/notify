@@ -14,10 +14,13 @@ import (
 )
 
 func TestPaymentReceivedHook(t *testing.T) {
+	testAppData := "testdata"
 	query := MobilePushWebHookQuery{
 		Platform: "android",
 		Token:    "1234",
+		AppData:  &testAppData,
 	}
+
 	paymentReceivedPayload := PaymentReceivedPayload{
 		Template: notify.NOTIFICATION_PAYMENT_RECEIVED,
 		Data: struct {
@@ -26,12 +29,13 @@ func TestPaymentReceivedHook(t *testing.T) {
 			PaymentHash: "1234",
 		},
 	}
+
 	body, err := json.Marshal(paymentReceivedPayload)
 	if err != nil {
 		t.Fatalf("failed to marshal notification %v", err)
 	}
 	expected := paymentReceivedPayload.ToNotification(&query)
-	testValidNotification(t, "/api/v1/notify?platform=android&token=1234", body, expected)
+	testValidNotification(t, "/api/v1/notify?platform=android&token=1234&app_data=testdata", body, expected)
 }
 
 func TestTxConfirmedHook(t *testing.T) {

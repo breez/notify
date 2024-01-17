@@ -14,44 +14,57 @@ import (
 )
 
 type MobilePushWebHookQuery struct {
-	Platform string `form:"platform" binding:"required,oneof=ios android"`
-	Token    string `form:"token" binding:"required"`
+	Platform string  `form:"platform" binding:"required,oneof=ios android"`
+	Token    string  `form:"token" binding:"required"`
+	AppData  *string `form:"app_data"`
 }
 
 type NotificationConvertible interface {
 	ToNotification(query *MobilePushWebHookQuery) *notify.Notification
 }
 
-type WebhookCallbackMessagePayload struct {
-	Template    string `json:"template" binding:"required,eq=webhook_callback_message"`
-	MessageType string `json:"message_type" binding:"required"`
-	Data        struct {
-		CallbackURL    string `json:"callback_url" binding:"required"`
-		MessagePayload string `json:"message_payload"`
+type LnurlPayInfoPayload struct {
+	Template string `json:"template" binding:"required,eq=lnurlpay_info"`
+	Data     struct {
+		CallbackURL string `json:"callback_url" binding:"required"`
+		ReplyURL    string `json:"reply_url" binding:"required"`
 	} `json:"data"`
 }
 
-func (p *WebhookCallbackMessagePayload) ToNotification(query *MobilePushWebHookQuery) *notify.Notification {
+func (p *LnurlPayInfoPayload) ToNotification(query *MobilePushWebHookQuery) *notify.Notification {
 	return &notify.Notification{
 		Template:         p.Template,
-		DisplayMessage:   p.GenerateDisplayMessage(),
+		DisplayMessage:   "Receiving payment",
 		Type:             query.Platform,
 		TargetIdentifier: query.Token,
+		AppData:          query.AppData,
 		Data: map[string]string{
-			"callback_url":    p.Data.CallbackURL,
-			"message_payload": p.Data.MessagePayload,
+			"callback_url": p.Data.CallbackURL,
+			"reply_url":    p.Data.ReplyURL,
 		},
 	}
 }
 
-func (p *WebhookCallbackMessagePayload) GenerateDisplayMessage() string {
-	switch p.MessageType {
-	case "lnulrpay_info":
-		return "Receiving payment"
-	case "lnurlpay_invoice":
-		return "Invoice requested"
+type LnurlPayInvoicePayload struct {
+	Template string `json:"template" binding:"required,eq=lnurlpay_invoice"`
+	Data     struct {
+		Amount   string `json:"amount" binding:"required"`
+		ReplyURL string `json:"reply_url" binding:"required"`
+	} `json:"data"`
+}
+
+func (p *LnurlPayInvoicePayload) ToNotification(query *MobilePushWebHookQuery) *notify.Notification {
+	return &notify.Notification{
+		Template:         p.Template,
+		DisplayMessage:   "Invoice requested",
+		Type:             query.Platform,
+		TargetIdentifier: query.Token,
+		AppData:          query.AppData,
+		Data: map[string]string{
+			"amount":    p.Data.Amount,
+			"reply_url": p.Data.ReplyURL,
+		},
 	}
-	return ""
 }
 
 type PaymentReceivedPayload struct {
@@ -67,6 +80,7 @@ func (p *PaymentReceivedPayload) ToNotification(query *MobilePushWebHookQuery) *
 		DisplayMessage:   "Incoming payment",
 		Type:             query.Platform,
 		TargetIdentifier: query.Token,
+		AppData:          query.AppData,
 		Data:             map[string]string{"payment_hash": p.Data.PaymentHash},
 	}
 }
@@ -84,6 +98,7 @@ func (p *TxConfirmedPayload) ToNotification(query *MobilePushWebHookQuery) *noti
 		DisplayMessage:   "Transaction confirmed",
 		Type:             query.Platform,
 		TargetIdentifier: query.Token,
+		AppData:          query.AppData,
 		Data:             map[string]string{"tx_id": p.Data.TxID},
 	}
 }
@@ -101,6 +116,7 @@ func (p *AddressTxsChangedPayload) ToNotification(query *MobilePushWebHookQuery)
 		DisplayMessage:   "Address transactions changed",
 		Type:             query.Platform,
 		TargetIdentifier: query.Token,
+		AppData:          query.AppData,
 		Data:             map[string]string{"address": p.Data.Address},
 	}
 }
@@ -132,7 +148,7 @@ func addWebHookRouter(r *gin.RouterGroup, notifier *notify.Notifier) {
 		}
 
 		// Find a matching notification payload
-		payloads := []NotificationConvertible{&PaymentReceivedPayload{}, &TxConfirmedPayload{}, &AddressTxsChangedPayload{}, &WebhookCallbackMessagePayload{}}
+		payloads := []NotificationConvertible{&PaymentReceivedPayload{}, &TxConfirmedPayload{}, &AddressTxsChangedPayload{}, &LnurlPayInfoPayload{}, &LnurlPayInvoicePayload{}}
 		var validPayload NotificationConvertible
 		for _, p := range payloads {
 			if err := c.ShouldBindBodyWith(p, binding.JSON); err != nil {

@@ -13,7 +13,8 @@ const (
 	NOTIFICATION_PAYMENT_RECEIVED    = "payment_received"
 	NOTIFICATION_TX_CONFIRMED        = "tx_confirmed"
 	NOTIFICATION_ADDRESS_TXS_CHANGED = "address_txs_changed"
-	NOTIFICATION_WEBHOOK_CALLBACK    = "webhook_callback_message"
+	NOTIFICATION_LNURLPAY_INFO       = "lnurlpay_info"
+	NOTIFICATION_LNURLPAY_INVOICE    = "lnurlpay_invoice"
 )
 
 var (
@@ -25,6 +26,7 @@ type Notification struct {
 	DisplayMessage   string
 	Type             string
 	TargetIdentifier string
+	AppData          *string
 	Data             map[string]string
 }
 
