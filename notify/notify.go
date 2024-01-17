@@ -27,7 +27,7 @@ type Notification struct {
 	Type             string
 	TargetIdentifier string
 	AppData          *string
-	Data             map[string]string
+	Data             map[string]interface{}
 }
 
 type Service interface {
