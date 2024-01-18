@@ -38,7 +38,7 @@ func (p *LnurlPayInfoPayload) ToNotification(query *MobilePushWebHookQuery) *not
 		Type:             query.Platform,
 		TargetIdentifier: query.Token,
 		AppData:          query.AppData,
-		Data: map[string]string{
+		Data: map[string]interface{}{
 			"callback_url": p.Data.CallbackURL,
 			"reply_url":    p.Data.ReplyURL,
 		},
@@ -48,7 +48,7 @@ func (p *LnurlPayInfoPayload) ToNotification(query *MobilePushWebHookQuery) *not
 type LnurlPayInvoicePayload struct {
 	Template string `json:"template" binding:"required,eq=lnurlpay_invoice"`
 	Data     struct {
-		Amount   string `json:"amount" binding:"required"`
+		Amount   uint64 `json:"amount" binding:"required,min=1"`
 		ReplyURL string `json:"reply_url" binding:"required"`
 	} `json:"data"`
 }
@@ -60,7 +60,7 @@ func (p *LnurlPayInvoicePayload) ToNotification(query *MobilePushWebHookQuery) *
 		Type:             query.Platform,
 		TargetIdentifier: query.Token,
 		AppData:          query.AppData,
-		Data: map[string]string{
+		Data: map[string]interface{}{
 			"amount":    p.Data.Amount,
 			"reply_url": p.Data.ReplyURL,
 		},
@@ -81,7 +81,7 @@ func (p *PaymentReceivedPayload) ToNotification(query *MobilePushWebHookQuery) *
 		Type:             query.Platform,
 		TargetIdentifier: query.Token,
 		AppData:          query.AppData,
-		Data:             map[string]string{"payment_hash": p.Data.PaymentHash},
+		Data:             map[string]interface{}{"payment_hash": p.Data.PaymentHash},
 	}
 }
 
@@ -99,7 +99,7 @@ func (p *TxConfirmedPayload) ToNotification(query *MobilePushWebHookQuery) *noti
 		Type:             query.Platform,
 		TargetIdentifier: query.Token,
 		AppData:          query.AppData,
-		Data:             map[string]string{"tx_id": p.Data.TxID},
+		Data:             map[string]interface{}{"tx_id": p.Data.TxID},
 	}
 }
 
@@ -117,7 +117,7 @@ func (p *AddressTxsChangedPayload) ToNotification(query *MobilePushWebHookQuery)
 		Type:             query.Platform,
 		TargetIdentifier: query.Token,
 		AppData:          query.AppData,
-		Data:             map[string]string{"address": p.Data.Address},
+		Data:             map[string]interface{}{"address": p.Data.Address},
 	}
 }
 
