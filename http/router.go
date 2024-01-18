@@ -48,7 +48,7 @@ func (p *LnurlPayInfoPayload) ToNotification(query *MobilePushWebHookQuery) *not
 type LnurlPayInvoicePayload struct {
 	Template string `json:"template" binding:"required,eq=lnurlpay_invoice"`
 	Data     struct {
-		Amount   int    `json:"amount" binding:"required"`
+		Amount   uint64 `json:"amount" binding:"required,min=1"`
 		ReplyURL string `json:"reply_url" binding:"required"`
 	} `json:"data"`
 }
