@@ -24,7 +24,7 @@ func createMessageFactory() services.FCMMessageBuilder {
 		switch notification.Template {
 		case notify.NOTIFICATION_PAYMENT_RECEIVED,
 			notify.NOTIFICATION_TX_CONFIRMED,
-			notify.NOTIFICATION_ADDRESS_TXS_CHANGED,
+			notify.NOTIFICATION_ADDRESS_TXS_CONFIRMED,
 			notify.NOTIFICATION_LNURLPAY_INFO,
 			notify.NOTIFICATION_LNURLPAY_INVOICE:
 
