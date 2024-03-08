@@ -103,17 +103,17 @@ func (p *TxConfirmedPayload) ToNotification(query *MobilePushWebHookQuery) *noti
 	}
 }
 
-type AddressTxsChangedPayload struct {
-	Template string `json:"template" binding:"required,eq=address_txs_changed"`
+type AddressTxsConfirmedPayload struct {
+	Template string `json:"template" binding:"required,eq=address_txs_confirmed"`
 	Data     struct {
 		Address string `json:"address" binding:"required"`
 	} `json:"data"`
 }
 
-func (p *AddressTxsChangedPayload) ToNotification(query *MobilePushWebHookQuery) *notify.Notification {
+func (p *AddressTxsConfirmedPayload) ToNotification(query *MobilePushWebHookQuery) *notify.Notification {
 	return &notify.Notification{
 		Template:         p.Template,
-		DisplayMessage:   "Address transactions changed",
+		DisplayMessage:   "Address transactions confirmed",
 		Type:             query.Platform,
 		TargetIdentifier: query.Token,
 		AppData:          query.AppData,
@@ -148,7 +148,7 @@ func addWebHookRouter(r *gin.RouterGroup, notifier *notify.Notifier) {
 		}
 
 		// Find a matching notification payload
-		payloads := []NotificationConvertible{&PaymentReceivedPayload{}, &TxConfirmedPayload{}, &AddressTxsChangedPayload{}, &LnurlPayInfoPayload{}, &LnurlPayInvoicePayload{}}
+		payloads := []NotificationConvertible{&PaymentReceivedPayload{}, &TxConfirmedPayload{}, &AddressTxsConfirmedPayload{}, &LnurlPayInfoPayload{}, &LnurlPayInvoicePayload{}}
 		var validPayload NotificationConvertible
 		for _, p := range payloads {
 			if err := c.ShouldBindBodyWith(p, binding.JSON); err != nil {

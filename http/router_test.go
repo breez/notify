@@ -64,19 +64,19 @@ func TestAddressTXsChangedHook(t *testing.T) {
 		Platform: "android",
 		Token:    "1234",
 	}
-	txAddresTXsChangedPayload := AddressTxsChangedPayload{
-		Template: notify.NOTIFICATION_ADDRESS_TXS_CHANGED,
+	txAddressTxsConfirmedPayload := AddressTxsConfirmedPayload{
+		Template: notify.NOTIFICATION_ADDRESS_TXS_CONFIRMED,
 		Data: struct {
 			Address string "json:\"address\" binding:\"required\""
 		}{
 			Address: "1234",
 		},
 	}
-	body, err := json.Marshal(txAddresTXsChangedPayload)
+	body, err := json.Marshal(txAddressTxsConfirmedPayload)
 	if err != nil {
 		t.Fatalf("failed to marshal notification %v", err)
 	}
-	expected := txAddresTXsChangedPayload.ToNotification(&query)
+	expected := txAddressTxsConfirmedPayload.ToNotification(&query)
 	testValidNotification(t, "/api/v1/notify?platform=android&token=1234", body, expected)
 }
 
