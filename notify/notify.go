@@ -10,11 +10,12 @@ import (
 )
 
 const (
-	NOTIFICATION_PAYMENT_RECEIVED    = "payment_received"
-	NOTIFICATION_TX_CONFIRMED        = "tx_confirmed"
+	NOTIFICATION_PAYMENT_RECEIVED      = "payment_received"
+	NOTIFICATION_TX_CONFIRMED          = "tx_confirmed"
 	NOTIFICATION_ADDRESS_TXS_CONFIRMED = "address_txs_confirmed"
-	NOTIFICATION_LNURLPAY_INFO       = "lnurlpay_info"
-	NOTIFICATION_LNURLPAY_INVOICE    = "lnurlpay_invoice"
+	NOTIFICATION_LNURLPAY_INFO         = "lnurlpay_info"
+	NOTIFICATION_LNURLPAY_INVOICE      = "lnurlpay_invoice"
+	NOTIFICATION_SWAP_UPDATED          = "swap_updated"
 )
 
 var (
