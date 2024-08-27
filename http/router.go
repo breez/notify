@@ -121,6 +121,25 @@ func (p *AddressTxsConfirmedPayload) ToNotification(query *MobilePushWebHookQuer
 	}
 }
 
+type SwapUpdatedPayload struct {
+	Event string `json:"event" binding:"required,eq=swap.update"`
+	Data  struct {
+		Id     string `json:"id" binding:"required"`
+		Status string `json:"status" binding:"required"`
+	} `json:"data"`
+}
+
+func (p *SwapUpdatedPayload) ToNotification(query *MobilePushWebHookQuery) *notify.Notification {
+	return &notify.Notification{
+		Template:         notify.NOTIFICATION_SWAP_UPDATED,
+		DisplayMessage:   "Swap updated",
+		Type:             query.Platform,
+		TargetIdentifier: query.Token,
+		AppData:          query.AppData,
+		Data:             map[string]interface{}{"id": p.Data.Id, "status": p.Data.Status},
+	}
+}
+
 func Run(notifier *notify.Notifier, config *config.HTTPConfig) error {
 	r := setupRouter(notifier)
 	r.SetTrustedProxies(nil)
@@ -148,7 +167,14 @@ func addWebHookRouter(r *gin.RouterGroup, notifier *notify.Notifier) {
 		}
 
 		// Find a matching notification payload
-		payloads := []NotificationConvertible{&PaymentReceivedPayload{}, &TxConfirmedPayload{}, &AddressTxsConfirmedPayload{}, &LnurlPayInfoPayload{}, &LnurlPayInvoicePayload{}}
+		payloads := []NotificationConvertible{
+			&PaymentReceivedPayload{},
+			&TxConfirmedPayload{},
+			&AddressTxsConfirmedPayload{},
+			&LnurlPayInfoPayload{},
+			&LnurlPayInvoicePayload{},
+			&SwapUpdatedPayload{},
+		}
 		var validPayload NotificationConvertible
 		for _, p := range payloads {
 			if err := c.ShouldBindBodyWith(p, binding.JSON); err != nil {
