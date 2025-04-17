@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	callbackTimeout = 30 * time.Second
+	callbackTimeout = 60 * time.Second
 )
 
 type ChannelNotifier interface {
