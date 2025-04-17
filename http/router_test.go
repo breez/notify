@@ -8,21 +8,21 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/breez/notify/channel"
 	"github.com/breez/notify/config"
-	"github.com/breez/notify/notification"
 	"github.com/breez/notify/notify"
 	"gotest.tools/assert"
 )
 
 func TestPaymentReceivedHook(t *testing.T) {
 	testAppData := "testdata"
-	query := notify.MobilePushWebHookQuery{
+	query := MobilePushWebHookQuery{
 		Platform: "android",
 		Token:    "1234",
 		AppData:  &testAppData,
 	}
 
-	paymentReceivedPayload := notify.PaymentReceivedPayload{
+	paymentReceivedPayload := PaymentReceivedPayload{
 		Template: notify.NOTIFICATION_PAYMENT_RECEIVED,
 		Data: struct {
 			PaymentHash string "json:\"payment_hash\" binding:\"required\""
@@ -40,11 +40,11 @@ func TestPaymentReceivedHook(t *testing.T) {
 }
 
 func TestTxConfirmedHook(t *testing.T) {
-	query := notify.MobilePushWebHookQuery{
+	query := MobilePushWebHookQuery{
 		Platform: "android",
 		Token:    "1234",
 	}
-	txConfirmedPayload := notify.TxConfirmedPayload{
+	txConfirmedPayload := TxConfirmedPayload{
 		Template: notify.NOTIFICATION_TX_CONFIRMED,
 		Data: struct {
 			TxID string "json:\"tx_id\" binding:\"required\""
@@ -61,11 +61,11 @@ func TestTxConfirmedHook(t *testing.T) {
 }
 
 func TestAddressTXsChangedHook(t *testing.T) {
-	query := notify.MobilePushWebHookQuery{
+	query := MobilePushWebHookQuery{
 		Platform: "android",
 		Token:    "1234",
 	}
-	txAddressTxsConfirmedPayload := notify.AddressTxsConfirmedPayload{
+	txAddressTxsConfirmedPayload := AddressTxsConfirmedPayload{
 		Template: notify.NOTIFICATION_ADDRESS_TXS_CONFIRMED,
 		Data: struct {
 			Address string "json:\"address\" binding:\"required\""
@@ -81,12 +81,12 @@ func TestAddressTXsChangedHook(t *testing.T) {
 	testValidNotification(t, "/api/v1/notify?platform=android&token=1234", body, expected)
 }
 
-func testValidNotification(t *testing.T, url string, body []byte, expected *notification.Notification) {
+func testValidNotification(t *testing.T, url string, body []byte, expected *notify.Notification) {
 	service := newTestService()
 	config := &config.Config{WorkersNum: 2}
 	notifier := notify.NewNotifier(config, map[string]notify.Service{"android": service})
-
-	router := setupRouter(notifier)
+	channel := channel.NewHttpCallbackChannel("http://localhost:8080")
+	router := setupRouter(notifier, channel)
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(body))
@@ -97,15 +97,15 @@ func testValidNotification(t *testing.T, url string, body []byte, expected *noti
 }
 
 type TestService struct {
-	sentQueue chan *notification.Notification
+	sentQueue chan *notify.Notification
 }
 
 func newTestService() *TestService {
-	queue := make(chan *notification.Notification, 10)
+	queue := make(chan *notify.Notification, 10)
 	return &TestService{sentQueue: queue}
 }
 
-func (t *TestService) Send(c context.Context, notification *notification.Notification) error {
+func (t *TestService) Send(c context.Context, notification *notify.Notification) error {
 	t.sentQueue <- notification
 	return nil
 }

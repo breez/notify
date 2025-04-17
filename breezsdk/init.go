@@ -6,7 +6,6 @@ import (
 
 	"firebase.google.com/go/messaging"
 	"github.com/breez/notify/config"
-	"github.com/breez/notify/notification"
 	"github.com/breez/notify/notify"
 	"github.com/breez/notify/notify/services"
 )
@@ -20,7 +19,7 @@ func NewNotifier(c *config.Config, fcmClient *messaging.Client) (*notify.Notifie
 }
 
 func createMessageFactory() services.FCMMessageBuilder {
-	return func(notification *notification.Notification) (*messaging.Message, error) {
+	return func(notification *notify.Notification) (*messaging.Message, error) {
 
 		switch notification.Template {
 		case notify.NOTIFICATION_PAYMENT_RECEIVED,
@@ -38,7 +37,7 @@ func createMessageFactory() services.FCMMessageBuilder {
 	}
 }
 
-func createPush(notification *notification.Notification) (*messaging.Message, error) {
+func createPush(notification *notify.Notification) (*messaging.Message, error) {
 	data := make(map[string]string)
 
 	data["notification_type"] = notification.Template
