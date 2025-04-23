@@ -2,15 +2,18 @@ package http
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
+	"strconv"
 
+	"github.com/breez/notify/channel"
 	"github.com/breez/notify/config"
 	"github.com/breez/notify/notify"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
+	"github.com/google/martian/v3/log"
 )
 
 type MobilePushWebHookQuery struct {
@@ -20,6 +23,7 @@ type MobilePushWebHookQuery struct {
 }
 
 type NotificationConvertible interface {
+	RequiresCallback() bool
 	ToNotification(query *MobilePushWebHookQuery) *notify.Notification
 }
 
@@ -29,6 +33,10 @@ type LnurlPayInfoPayload struct {
 		CallbackURL string `json:"callback_url" binding:"required"`
 		ReplyURL    string `json:"reply_url" binding:"required"`
 	} `json:"data"`
+}
+
+func (p *LnurlPayInfoPayload) RequiresCallback() bool {
+	return false
 }
 
 func (p *LnurlPayInfoPayload) ToNotification(query *MobilePushWebHookQuery) *notify.Notification {
@@ -53,6 +61,10 @@ type LnurlPayInvoicePayload struct {
 	} `json:"data"`
 }
 
+func (p *LnurlPayInvoicePayload) RequiresCallback() bool {
+	return false
+}
+
 func (p *LnurlPayInvoicePayload) ToNotification(query *MobilePushWebHookQuery) *notify.Notification {
 	return &notify.Notification{
 		Template:         p.Template,
@@ -74,6 +86,10 @@ type PaymentReceivedPayload struct {
 	} `json:"data"`
 }
 
+func (p *PaymentReceivedPayload) RequiresCallback() bool {
+	return false
+}
+
 func (p *PaymentReceivedPayload) ToNotification(query *MobilePushWebHookQuery) *notify.Notification {
 	return &notify.Notification{
 		Template:         p.Template,
@@ -92,6 +108,10 @@ type TxConfirmedPayload struct {
 	} `json:"data"`
 }
 
+func (p *TxConfirmedPayload) RequiresCallback() bool {
+	return false
+}
+
 func (p *TxConfirmedPayload) ToNotification(query *MobilePushWebHookQuery) *notify.Notification {
 	return &notify.Notification{
 		Template:         p.Template,
@@ -108,6 +128,10 @@ type AddressTxsConfirmedPayload struct {
 	Data     struct {
 		Address string `json:"address" binding:"required"`
 	} `json:"data"`
+}
+
+func (p *AddressTxsConfirmedPayload) RequiresCallback() bool {
+	return false
 }
 
 func (p *AddressTxsConfirmedPayload) ToNotification(query *MobilePushWebHookQuery) *notify.Notification {
@@ -129,6 +153,10 @@ type SwapUpdatedPayload struct {
 	} `json:"data"`
 }
 
+func (p *SwapUpdatedPayload) RequiresCallback() bool {
+	return false
+}
+
 func (p *SwapUpdatedPayload) ToNotification(query *MobilePushWebHookQuery) *notify.Notification {
 	return &notify.Notification{
 		Template:         notify.NOTIFICATION_SWAP_UPDATED,
@@ -140,22 +168,44 @@ func (p *SwapUpdatedPayload) ToNotification(query *MobilePushWebHookQuery) *noti
 	}
 }
 
-func Run(notifier *notify.Notifier, config *config.HTTPConfig) error {
-	r := setupRouter(notifier)
+type InvoiceRequestPayload struct {
+	Event string `json:"event" binding:"required,eq=invoice.request"`
+	Data  struct {
+		Offer          string `json:"offer" binding:"required"`
+		InvoiceRequest string `json:"invoiceRequest" binding:"required"`
+	} `json:"data"`
+}
+
+func (p *InvoiceRequestPayload) RequiresCallback() bool {
+	return true
+}
+
+func (p *InvoiceRequestPayload) ToNotification(query *MobilePushWebHookQuery) *notify.Notification {
+	return &notify.Notification{
+		Template:         notify.NOTIFICATION_INVOICE_REQUEST,
+		DisplayMessage:   "Invoice request",
+		Type:             query.Platform,
+		TargetIdentifier: query.Token,
+		AppData:          query.AppData,
+		Data:             map[string]interface{}{"offer": p.Data.Offer, "invoice_request": p.Data.InvoiceRequest},
+	}
+}
+
+func Run(notifier *notify.Notifier, channel *channel.HttpCallbackChannel, config *config.HTTPConfig) error {
+	r := setupRouter(notifier, channel)
 	r.SetTrustedProxies(nil)
 	return r.Run(config.Address)
 }
 
-func setupRouter(notifier *notify.Notifier) *gin.Engine {
+func setupRouter(notifier *notify.Notifier, channel *channel.HttpCallbackChannel) *gin.Engine {
 	r := gin.Default()
 	router := r.Group("api/v1")
-	addWebHookRouter(router, notifier)
+	addRouter(router, notifier, channel)
 	return r
 }
 
-func addWebHookRouter(r *gin.RouterGroup, notifier *notify.Notifier) {
+func addRouter(r *gin.RouterGroup, notifier *notify.Notifier, channel *channel.HttpCallbackChannel) {
 	r.POST("/notify", func(c *gin.Context) {
-
 		body, _ := io.ReadAll(c.Request.Body)
 		c.Request.Body = io.NopCloser(bytes.NewBuffer(body))
 
@@ -174,6 +224,7 @@ func addWebHookRouter(r *gin.RouterGroup, notifier *notify.Notifier) {
 			&LnurlPayInfoPayload{},
 			&LnurlPayInvoicePayload{},
 			&SwapUpdatedPayload{},
+			&InvoiceRequestPayload{},
 		}
 		var validPayload NotificationConvertible
 		for _, p := range payloads {
@@ -185,14 +236,52 @@ func addWebHookRouter(r *gin.RouterGroup, notifier *notify.Notifier) {
 		}
 
 		if validPayload == nil {
-			log.Printf("invalid payload, body: %s", body)
+			log.Debugf("invalid payload, body: %s", body)
 			c.AbortWithError(http.StatusBadRequest, fmt.Errorf("unsupported payload, body: %s", body))
 			return
 		}
 
-		if err := notifier.Notify(c, validPayload.ToNotification(&query)); err != nil {
-			log.Printf("failed to notify, query: %v, error: %v", query, err)
-			c.AbortWithStatus(http.StatusInternalServerError)
+		if validPayload.RequiresCallback() {
+			response, err := channel.Notify(c, notifier, r.BasePath(), validPayload.ToNotification(&query))
+			if c.IsAborted() {
+				return
+			}
+			if err != nil {
+				log.Debugf("failed to notify with channel, query: %v, error: %v", query, err)
+				c.AbortWithStatus(http.StatusInternalServerError)
+				return
+			}
+			c.Header("Content-Type", "application/json")
+			c.Writer.Write([]byte(response))
+			return
+		} else {
+			if err := notifier.Notify(c, validPayload.ToNotification(&query)); err != nil {
+				log.Debugf("failed to notify, query: %v, error: %v", query, err)
+				c.AbortWithStatus(http.StatusInternalServerError)
+				return
+			}
+		}
+
+		c.Status(http.StatusOK)
+	})
+
+	r.POST("/response/:responseId", func(c *gin.Context) {
+		responseId := c.Param("responseId")
+
+		reqId, err := strconv.ParseUint(responseId, 10, 64)
+		if err != nil {
+			c.AbortWithError(http.StatusBadRequest, errors.New("invalid response"))
+			return
+		}
+
+		all, err := io.ReadAll(c.Request.Body)
+		if err != nil {
+			c.AbortWithError(http.StatusInternalServerError, errors.New("internal error"))
+			return
+		}
+
+		if err := channel.OnResponse(reqId, string(all)); err != nil {
+			c.AbortWithError(http.StatusInternalServerError, err)
 			return
 		}
 

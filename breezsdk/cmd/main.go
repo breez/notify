@@ -12,6 +12,7 @@ import (
 	"google.golang.org/api/option"
 
 	"github.com/breez/notify/breezsdk"
+	"github.com/breez/notify/channel"
 	"github.com/breez/notify/config"
 	"github.com/breez/notify/http"
 )
@@ -63,7 +64,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to create breezsdk notifier %v", err)
 	}
-	if err = http.Run(notifier, &config.HTTPConfig); err != nil {
+	channel := channel.NewHttpCallbackChannel(config.ExternalURL)
+	if err = http.Run(notifier, channel, &config.HTTPConfig); err != nil {
 		log.Printf("web server has exited with error")
 	}
 }

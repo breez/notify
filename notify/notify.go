@@ -16,6 +16,7 @@ const (
 	NOTIFICATION_LNURLPAY_INFO         = "lnurlpay_info"
 	NOTIFICATION_LNURLPAY_INVOICE      = "lnurlpay_invoice"
 	NOTIFICATION_SWAP_UPDATED          = "swap_updated"
+	NOTIFICATION_INVOICE_REQUEST       = "invoice_request"
 )
 
 var (
@@ -40,9 +41,7 @@ type Notifier struct {
 	serviceByType map[string]Service
 }
 
-func NewNotifier(
-	config *config.Config,
-	services map[string]Service) *Notifier {
+func NewNotifier(config *config.Config, services map[string]Service) *Notifier {
 	q := queue.NewPool(config.WorkersNum)
 	return &Notifier{
 		queue:         q,

@@ -26,16 +26,16 @@ func TestNotify(t *testing.T) {
 	service := newTestService()
 	config := &config.Config{WorkersNum: 2}
 	notifier := NewNotifier(config, map[string]Service{"test": service})
-	notification := Notification{
+	n := Notification{
 		Template:         "t1",
 		Type:             "test",
 		TargetIdentifier: "token1",
 	}
-	notifier.Notify(context.Background(), &notification)
+	notifier.Notify(context.Background(), &n)
 
 	var notifications []Notification
 	res := <-service.sentQueue
 	notifications = append(notifications, *res)
 	assert.Assert(t, len(notifications) == 1)
-	assert.DeepEqual(t, notifications[0], notification)
+	assert.DeepEqual(t, notifications[0], n)
 }

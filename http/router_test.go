@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/breez/notify/channel"
 	"github.com/breez/notify/config"
 	"github.com/breez/notify/notify"
 	"gotest.tools/assert"
@@ -84,8 +85,8 @@ func testValidNotification(t *testing.T, url string, body []byte, expected *noti
 	service := newTestService()
 	config := &config.Config{WorkersNum: 2}
 	notifier := notify.NewNotifier(config, map[string]notify.Service{"android": service})
-
-	router := setupRouter(notifier)
+	channel := channel.NewHttpCallbackChannel("http://localhost:8080")
+	router := setupRouter(notifier, channel)
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(body))

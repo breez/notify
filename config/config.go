@@ -9,8 +9,9 @@ type HTTPConfig struct {
 }
 
 type Config struct {
-	WorkersNum int `env:"NOTIFY_WORKERS_NUM"`
-	HTTPConfig HTTPConfig
+	WorkersNum  int `env:"NOTIFY_WORKERS_NUM"`
+	ExternalURL string `env:"NOTIFY_EXTERNAL_URL"`
+	HTTPConfig  HTTPConfig
 }
 
 func (c *Config) Validate() error {

@@ -27,7 +27,8 @@ func createMessageFactory() services.FCMMessageBuilder {
 			notify.NOTIFICATION_ADDRESS_TXS_CONFIRMED,
 			notify.NOTIFICATION_LNURLPAY_INFO,
 			notify.NOTIFICATION_LNURLPAY_INVOICE,
-			notify.NOTIFICATION_SWAP_UPDATED:
+			notify.NOTIFICATION_SWAP_UPDATED,
+			notify.NOTIFICATION_INVOICE_REQUEST:
 
 			return createPush(notification)
 		}
