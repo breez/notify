@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/rand"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -33,7 +34,7 @@ type HttpCallbackChannel struct {
 func NewHttpCallbackChannel(callbackBaseURL string) *HttpCallbackChannel {
 	channel := &HttpCallbackChannel{
 		httpClient:      http.DefaultClient,
-		callbackBaseURL: callbackBaseURL,
+		callbackBaseURL: strings.TrimRight(callbackBaseURL, "/"),
 		random:          rand.New(rand.NewSource(time.Now().UnixNano())),
 		pendingRequests: make(map[uint64]*PendingRequest),
 	}
@@ -43,7 +44,8 @@ func NewHttpCallbackChannel(callbackBaseURL string) *HttpCallbackChannel {
 
 func (p *HttpCallbackChannel) Notify(c context.Context, notifier *notify.Notifier, basePath string, request *notify.Notification) (string, error) {
 	reqID := p.random.Uint64()
-	callbackURL := fmt.Sprintf("%s/%s/response/%d", p.callbackBaseURL, basePath, reqID)
+	trimmedBasePath := strings.Trim(basePath, "/")
+	callbackURL := fmt.Sprintf("%s/%s/response/%d", p.callbackBaseURL, trimmedBasePath, reqID)
 	request.Data["reply_url"] = callbackURL
 
 	pendingRequest := &PendingRequest{
