@@ -15,6 +15,7 @@ const (
 	NOTIFICATION_ADDRESS_TXS_CONFIRMED = "address_txs_confirmed"
 	NOTIFICATION_LNURLPAY_INFO         = "lnurlpay_info"
 	NOTIFICATION_LNURLPAY_INVOICE      = "lnurlpay_invoice"
+	NOTIFICATION_LNURLPAY_VERIFY       = "lnurlpay_verify"
 	NOTIFICATION_SWAP_UPDATED          = "swap_updated"
 	NOTIFICATION_INVOICE_REQUEST       = "invoice_request"
 )

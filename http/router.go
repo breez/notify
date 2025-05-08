@@ -56,8 +56,9 @@ func (p *LnurlPayInfoPayload) ToNotification(query *MobilePushWebHookQuery) *not
 type LnurlPayInvoicePayload struct {
 	Template string `json:"template" binding:"required,eq=lnurlpay_invoice"`
 	Data     struct {
-		Amount   uint64 `json:"amount" binding:"required,min=1"`
-		ReplyURL string `json:"reply_url" binding:"required"`
+		Amount    uint64  `json:"amount" binding:"required,min=1"`
+		ReplyURL  string  `json:"reply_url" binding:"required"`
+		VerifyURL *string `json:"verify_url"`
 	} `json:"data"`
 }
 
@@ -73,8 +74,35 @@ func (p *LnurlPayInvoicePayload) ToNotification(query *MobilePushWebHookQuery) *
 		TargetIdentifier: query.Token,
 		AppData:          query.AppData,
 		Data: map[string]interface{}{
-			"amount":    p.Data.Amount,
-			"reply_url": p.Data.ReplyURL,
+			"amount":     p.Data.Amount,
+			"reply_url":  p.Data.ReplyURL,
+			"verify_url": p.Data.VerifyURL,
+		},
+	}
+}
+
+type LnurlPayVerifyPayload struct {
+	Template string `json:"template" binding:"required,eq=lnurlpay_verify"`
+	Data     struct {
+		PaymentHash string `json:"payment_hash" binding:"required"`
+		ReplyURL    string `json:"reply_url" binding:"required"`
+	} `json:"data"`
+}
+
+func (p *LnurlPayVerifyPayload) RequiresCallback() bool {
+	return false
+}
+
+func (p *LnurlPayVerifyPayload) ToNotification(query *MobilePushWebHookQuery) *notify.Notification {
+	return &notify.Notification{
+		Template:         p.Template,
+		DisplayMessage:   "Verify payment",
+		Type:             query.Platform,
+		TargetIdentifier: query.Token,
+		AppData:          query.AppData,
+		Data: map[string]interface{}{
+			"payment_hash": p.Data.PaymentHash,
+			"reply_url":    p.Data.ReplyURL,
 		},
 	}
 }
@@ -223,6 +251,7 @@ func addRouter(r *gin.RouterGroup, notifier *notify.Notifier, channel *channel.H
 			&AddressTxsConfirmedPayload{},
 			&LnurlPayInfoPayload{},
 			&LnurlPayInvoicePayload{},
+			&LnurlPayVerifyPayload{},
 			&SwapUpdatedPayload{},
 			&InvoiceRequestPayload{},
 		}
