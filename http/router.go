@@ -67,18 +67,22 @@ func (p *LnurlPayInvoicePayload) RequiresCallback() bool {
 }
 
 func (p *LnurlPayInvoicePayload) ToNotification(query *MobilePushWebHookQuery) *notify.Notification {
-	return &notify.Notification{
+	notification := notify.Notification{
 		Template:         p.Template,
 		DisplayMessage:   "Invoice requested",
 		Type:             query.Platform,
 		TargetIdentifier: query.Token,
 		AppData:          query.AppData,
 		Data: map[string]interface{}{
-			"amount":     p.Data.Amount,
-			"reply_url":  p.Data.ReplyURL,
-			"verify_url": p.Data.VerifyURL,
+			"amount":    p.Data.Amount,
+			"reply_url": p.Data.ReplyURL,
 		},
 	}
+	if p.Data.VerifyURL != nil {
+		notification.Data["verify_url"] = p.Data.VerifyURL
+	}
+
+	return &notification
 }
 
 type LnurlPayVerifyPayload struct {
