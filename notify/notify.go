@@ -18,6 +18,7 @@ const (
 	NOTIFICATION_LNURLPAY_VERIFY       = "lnurlpay_verify"
 	NOTIFICATION_SWAP_UPDATED          = "swap_updated"
 	NOTIFICATION_INVOICE_REQUEST       = "invoice_request"
+	NOTIFICATION_NWC_EVENT   					 = "nwc_event"
 )
 
 var (
