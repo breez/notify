@@ -227,6 +227,28 @@ func (p *InvoiceRequestPayload) ToNotification(query *MobilePushWebHookQuery) *n
 	}
 }
 
+type NwcEventPayload struct {
+	Template  string `json:"template" binding:"required,eq=nwc_event"`
+	Data      struct {
+		EventID string `json:"event_id" binding:"required"`
+	} `json:"data"`
+}
+
+func (p *NwcEventPayload) RequiresCallback() bool {
+	return false
+}
+
+func (p *NwcEventPayload) ToNotification(query *MobilePushWebHookQuery) *notify.Notification {
+	return &notify.Notification{
+		Template:         notify.NOTIFICATION_NWC_EVENT,
+		DisplayMessage:   "NWC Event Received",
+		Type:             query.Platform,
+		TargetIdentifier: query.Token,
+		AppData:          query.AppData,
+		Data:             map[string]interface{}{"event_id": p.Data.EventID},
+	}
+}
+
 func Run(notifier *notify.Notifier, channel *channel.HttpCallbackChannel, config *config.HTTPConfig) error {
 	r := setupRouter(notifier, channel)
 	r.SetTrustedProxies(nil)
@@ -262,6 +284,7 @@ func addRouter(r *gin.RouterGroup, notifier *notify.Notifier, channel *channel.H
 			&LnurlPayVerifyPayload{},
 			&SwapUpdatedPayload{},
 			&InvoiceRequestPayload{},
+			&NwcEventPayload{},
 		}
 		var validPayload NotificationConvertible
 		for _, p := range payloads {
