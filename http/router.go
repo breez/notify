@@ -60,6 +60,7 @@ type LnurlPayInvoicePayload struct {
 		Comment   *string `json:"comment"`
 		ReplyURL  string  `json:"reply_url" binding:"required"`
 		VerifyURL *string `json:"verify_url"`
+		Nostr     *string `json:"nostr"`
 	} `json:"data"`
 }
 
@@ -84,6 +85,9 @@ func (p *LnurlPayInvoicePayload) ToNotification(query *MobilePushWebHookQuery) *
 	}
 	if p.Data.VerifyURL != nil {
 		notification.Data["verify_url"] = p.Data.VerifyURL
+	}
+	if p.Data.Nostr != nil {
+		notification.Data["nostr"] = p.Data.Nostr
 	}
 
 	return &notification
