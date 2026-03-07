@@ -232,9 +232,9 @@ func (p *InvoiceRequestPayload) ToNotification(query *MobilePushWebHookQuery) *n
 }
 
 type NwcEventPayload struct {
-	Template  string `json:"template" binding:"required,eq=nwc_event"`
-	Data      struct {
-		EventID string `json:"event_id" binding:"required"`
+	Template string `json:"template" binding:"required,eq=nwc_event"`
+	Data     struct {
+		Event string `json:"event" binding:"required"`
 	} `json:"data"`
 }
 
@@ -249,7 +249,7 @@ func (p *NwcEventPayload) ToNotification(query *MobilePushWebHookQuery) *notify.
 		Type:             query.Platform,
 		TargetIdentifier: query.Token,
 		AppData:          query.AppData,
-		Data:             map[string]interface{}{"event_id": p.Data.EventID},
+		Data:             map[string]interface{}{"event": p.Data.Event},
 	}
 }
 
